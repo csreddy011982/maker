@@ -53,8 +53,8 @@ public class MockSplReportFeedGeneratorService {
     private Map<String, String> companyMap = new HashMap<>();
     @PostConstruct
     public void init() {
-        loadCompanyData();
         // This method will be called automatically after the bean is initialized
+        loadCompanyData();
         generateSplReportFeed();
     }
     static {
@@ -74,6 +74,7 @@ public class MockSplReportFeedGeneratorService {
     public void generateFile(String splReportFeedName) {
         try {
             if(splReportFeedName != null) {
+
                 List<Long> accountNumbers = readFileLines(Paths.get(new DefaultResourceLoader().getResource(accountFilePath).getFile().getAbsolutePath()).toString());
                 List<Map<String, Object>> reports = generateReports(accountNumbers);
 
@@ -90,7 +91,11 @@ public class MockSplReportFeedGeneratorService {
 
     private List<Long> readFileLines(String filePath) throws Exception {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            return reader.lines().map(Long::parseLong).collect(Collectors.toList());
+            return reader.lines()
+                    .map(String::trim)
+                    .filter(line -> !line.isEmpty())  // Avoid empty lines
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
         }
     }
 
@@ -98,18 +103,18 @@ public class MockSplReportFeedGeneratorService {
 
         List<Map<String, Object>> reports = new ArrayList<>();
         String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)).toUpperCase();
-        int pageCounter = 1;
+
         for (Long accountNumber : accountNumbers) {
             for (Map.Entry<String, String> companyEntry : companyMap.entrySet()) {
                 String formattedAccount = String.format("%014d", accountNumber);
                 String accountNumberStr = String.format("%08d", accountNumber);
                 // Fetch company details dynamically
-                String companyCode = companyMap.keySet().stream().findFirst().orElse("0000");
-                String companyName = companyMap.getOrDefault(companyCode, "UNKNOWN");
+                String companyCode = companyEntry.getKey();
+                String companyName = companyEntry.getValue();
                 int sequenceCounter = 1;
 
                 // Account Header
-                String header = String.format("H%s       %07d                                                      PAGE %d", accountNumberStr, sequenceCounter++, pageCounter++);
+                String header = String.format("H%s       %07d                                                      ", accountNumberStr, sequenceCounter++);
                 // Generate Details
                 List<String> details = generateDetails(accountNumber, sequenceCounter, companyCode, companyName);
                 sequenceCounter += details.size();
@@ -173,12 +178,15 @@ public class MockSplReportFeedGeneratorService {
         report.put("footer", footer);
         return report;
     }
-    private static void writeToFile(String fileName, List<Map<String, Object>> reports) {
+    private  void writeToFile(String fileName, List<Map<String, Object>> reports) {
         // Generate timestamp in the format "MMM_dd_yyyy_HHmmss"
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")).toUpperCase();
         // Append timestamp to the provided filename
-        String finalFileName = String.format("%s%s.DAT", fileName, timestamp);
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(finalFileName))) {
+        String sanitizedOutputDir = outputDirPath.replace("\"", "").trim();
+        log.info("Writing report to directory: {}", sanitizedOutputDir);
+
+        String finalFilePath = Paths.get(sanitizedOutputDir, String.format("%s%s.DAT", fileName, timestamp)).toString();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(finalFilePath))) {
             // Write File Header first
             writer.write(generateFileHeader(fileName));
             writer.newLine();
@@ -190,9 +198,9 @@ public class MockSplReportFeedGeneratorService {
                 writer.newLine();
              }
             writer.write(generateFileFooter(fileName));
-            System.out.println("Report written to " + finalFileName);
+            System.out.println("Report written to " + finalFilePath);
         } catch (IOException | TemplateException e) {
-            e.printStackTrace();
+            log.error("Error writing report file: {}", finalFilePath, e);
         }
     }
     private static List<String> generateDetails(Long accountNumber, int sequenceCounter, String companyCode, String companyName) {
@@ -200,9 +208,9 @@ public class MockSplReportFeedGeneratorService {
         String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy"));
         //String companyCode = "0901";
         List<String> details = new ArrayList<>();
-
+        int pageCounter = 1;
         int detailSequence = 1;  // Reset to 1 for every account
-        details.add(String.format("D%06d1                     %s %s", detailSequence++,companyName, companyCode));
+        details.add(String.format("D%06d1                     %s %s   PAGE %d", detailSequence++,companyName, companyCode,pageCounter++));
         details.add(String.format("D%06d                      ACH CASH CONCENTRATION", detailSequence++));
         details.add(String.format("D%06d                      REPORTED AS OF %s", detailSequence++, currentDate));
         details.add(String.format("D%06d                        PRINTED ON %s", detailSequence++, currentDate));

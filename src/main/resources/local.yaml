@@ -9,7 +9,7 @@ bls-file-feed:
     account-file-path: /mockdata/account.dat
     baiCode-file-path: /mockdata/baicodes.dat
   out-data:
-    out-file-path: /output/
+    out-file-path: /output
   system-environment:
     host: "sftp.example.com"
     user: "sftp-user"
@@ -21,7 +21,7 @@ bls-file-feed:
      account-file-path: /mockdata/account.dat
      baiCode-file-path: /mockdata/baicodes.dat
      companyName-file-path: /mockdata/company.dat
-     out-file-path: /output/
+     out-file-path: src/main/resources/output
      remote-file-location: /remote/path/
 file:
   output-dir: /output/
