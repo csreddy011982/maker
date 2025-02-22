@@ -100,26 +100,28 @@ public class MockSplReportFeedGeneratorService {
         String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)).toUpperCase();
         int pageCounter = 1;
         for (Long accountNumber : accountNumbers) {
-            String formattedAccount = String.format("%014d", accountNumber);
-           String accountNumberStr = String.format("%08d", accountNumber);
-            // Fetch company details dynamically
-            String companyCode = companyMap.keySet().stream().findFirst().orElse("0000");
-            String companyName = companyMap.getOrDefault(companyCode, "UNKNOWN");
-            int sequenceCounter = 1;
+            for (Map.Entry<String, String> companyEntry : companyMap.entrySet()) {
+                String formattedAccount = String.format("%014d", accountNumber);
+                String accountNumberStr = String.format("%08d", accountNumber);
+                // Fetch company details dynamically
+                String companyCode = companyMap.keySet().stream().findFirst().orElse("0000");
+                String companyName = companyMap.getOrDefault(companyCode, "UNKNOWN");
+                int sequenceCounter = 1;
 
-            // Account Header
-            String header = String.format("H%s       %07d                                                      PAGE %d", accountNumberStr, sequenceCounter++,pageCounter++);
-            // Generate Details
-            List<String> details = generateDetails(accountNumber, sequenceCounter,companyCode, companyName);
-            sequenceCounter += details.size();
+                // Account Header
+                String header = String.format("H%s       %07d                                                      PAGE %d", accountNumberStr, sequenceCounter++, pageCounter++);
+                // Generate Details
+                List<String> details = generateDetails(accountNumber, sequenceCounter, companyCode, companyName);
+                sequenceCounter += details.size();
 
-            // Footer Section (Including last sequence number without "D")
+                // Footer Section (Including last sequence number without "D")
 
-            String lastSequenceNumber = String.format("%07d", sequenceCounter - 2);
+                String lastSequenceNumber = String.format("%07d", sequenceCounter - 2);
 
-            String footer = String.format("T%s       %s", accountNumberStr, lastSequenceNumber);
-            // Create Report Structure
-            reports.add(createReport(header, details, footer));
+                String footer = String.format("T%s       %s", accountNumberStr, lastSequenceNumber);
+                // Create Report Structure
+                reports.add(createReport(header, details, footer));
+            }
         }
         return reports;
     }
