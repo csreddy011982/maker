@@ -1,0 +1,168 @@
+package com.dvtech.maker.test;
+
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+
+import java.io.*;
+import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+public class ReportGenerator {
+
+    private static Configuration freemarkerConfig;
+
+    static {
+        freemarkerConfig = new Configuration(Configuration.VERSION_2_3_31);
+        freemarkerConfig.setClassLoaderForTemplateLoading(ReportGenerator.class.getClassLoader(), "templates");
+    }
+
+    public static void main(String[] args) {
+        List<Long> accountNumbers = Arrays.asList(34070L, 54070L);
+        List<Map<String, Object>> reports = generateReports(accountNumbers);
+
+        // Write to file with file header
+        writeToFile("test.dat", reports);
+    }
+
+    private static List<Map<String, Object>> generateReports(List<Long> accountNumbers) {
+        List<Map<String, Object>> reports = new ArrayList<>();
+        String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)).toUpperCase();
+
+
+        for (Long accountNumber : accountNumbers) {
+            String formattedAccount = String.format("%014d", accountNumber);
+            String accountNumberStr = String.valueOf(accountNumber);
+            int sequenceCounter = 1;
+
+            // Account Header
+            String header = String.format("H%s       %07d", accountNumberStr, sequenceCounter++);
+
+            // Details Section - Always starts with D000001
+            List<String> details = new ArrayList<>();
+            int detailSequence = 1;  // Reset to 1 for every account
+
+            details.add(String.format("D%06d           WW GRAINGER 0901", detailSequence++));
+            details.add(String.format("D%06d           ACH CASH CONCENTRATION", detailSequence++));
+            details.add(String.format("D%06d           REPORTED AS OF %s", detailSequence++, currentDate));
+            details.add(String.format("D%06d           PRINTED ON %s", detailSequence++, currentDate));
+            details.add(String.format("D%06d           ACCOUNT %s WW GRAINGER 0901", detailSequence++, formattedAccount));
+            details.add(String.format("D%06d       FR/ABA      UNIT BANK DDA      UNIT      UNIT NAME    AMOUNT", detailSequence++));
+            details.add(String.format("D%06d       -----------------------------------------------------------", detailSequence++));
+
+            // Transactions
+            List<Transaction> transactions = generateTransactions(formattedAccount);
+            double totalDeposits = 0.0;
+
+            for (Transaction transaction : transactions) {
+                String transactionDetail = String.format("D%06d         %-10s %-15s %-10s %-10s %10.2f",
+                        detailSequence++, transaction.frAba, transaction.unitBankDDA, transaction.unit, transaction.unitName, transaction.amount);
+                details.add(transactionDetail);
+                totalDeposits += transaction.amount;
+            }
+
+            // Calculate Totals
+            DecimalFormat decimalFormat = new DecimalFormat("#,###.00");
+            String formattedTotalDeposits = decimalFormat.format(totalDeposits);
+            String formattedTotalCredits = decimalFormat.format(totalDeposits);
+            String formattedTotalDebits = "0.00"; // Modify logic if needed
+
+            details.add(String.format("D%06d DEPOSIT ACCOUNT NUMBER: %s  DEPOSIT TOTAL: %s", detailSequence++, formattedAccount, formattedTotalDeposits));
+            details.add(String.format("D%06d TOTAL CREDITS: %s  TOTAL DEBITS: %s", detailSequence++, formattedTotalCredits, formattedTotalDebits));
+
+            // Footer Section (Includes last sequence number without "D")
+            String lastSequenceNumber = String.format("%07d", detailSequence - 1);
+            String footer = String.format("T%s       %s", accountNumberStr, lastSequenceNumber);
+
+            // Create Report Structure
+            reports.add(createReport(header, details, footer));
+        }
+
+        return reports;
+    }
+
+    /**
+     * Generates the File Header (Separate from Account Headers)
+     */
+    private static String generateFileHeader() {
+        String generatedNumber = generateRandom13DigitNumber();
+        return String.format("LACON%sTNT                  550", generatedNumber);
+    }
+
+    /**
+     * Generates a 13-digit random number
+     */
+    private static String generateRandom13DigitNumber() {
+        Random random = new Random();
+        long number = 1_000_000_000_000L + random.nextLong();
+        return String.valueOf(number);
+    }
+
+    private static Map<String, Object> createReport(String header, List<String> details, String footer) {
+        Map<String, Object> report = new HashMap<>();
+        report.put("header", header);
+        report.put("details", details);
+        report.put("footer", footer);
+        return report;
+    }
+
+    private static List<Transaction> generateTransactions(String accountNumber) {
+        Random random = new Random();
+        List<Transaction> transactions = new ArrayList<>();
+        int transactionCount = 3 + random.nextInt(3); // 3 to 5 transactions
+
+        for (int i = 0; i < transactionCount; i++) {
+            String frAba = String.format("%06d", random.nextInt(999999));
+            String unitBankDDA = String.format("%013d", random.nextInt(999999999));
+            String unit = String.format("%05d", random.nextInt(99999));
+            String unitName = "GRAINGER";
+            double amount = 100 + random.nextDouble() * 400; // Amount between 100 - 500
+
+            transactions.add(new Transaction(frAba, unitBankDDA, unit, unitName, amount));
+        }
+
+        return transactions;
+    }
+
+    private static void writeToFile(String fileName, List<Map<String, Object>> reports) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            // Write File Header first
+            writer.write(generateFileHeader());
+            writer.newLine();
+
+            Template template = freemarkerConfig.getTemplate("reportTemplate.ftl");
+
+            for (Map<String, Object> report : reports) {
+                StringWriter stringWriter = new StringWriter();
+                template.process(report, stringWriter);
+                writer.write(stringWriter.toString());
+                writer.newLine();
+                writer.write("=====================================");
+                writer.newLine();
+            }
+
+            System.out.println("Report written to " + fileName);
+        } catch (IOException | TemplateException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+// Transaction Model
+class Transaction {
+    String frAba;
+    String unitBankDDA;
+    String unit;
+    String unitName;
+    double amount;
+
+    public Transaction(String frAba, String unitBankDDA, String unit, String unitName, double amount) {
+        this.frAba = frAba;
+        this.unitBankDDA = unitBankDDA;
+        this.unit = unit;
+        this.unitName = unitName;
+        this.amount = amount;
+    }
+}

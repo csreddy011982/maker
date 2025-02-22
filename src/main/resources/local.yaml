@@ -1,0 +1,27 @@
+bls-file-feed:
+  advice:
+    template-file-name:  adv/Advice_feed_template.ftl
+    feed-names: ARH,BTR,BTS
+    schedule: 0 0 3-22 ? * MON-FRI
+    out-file-name: output.dat
+    remote-file-location: /remote/path/
+  input-data:
+    account-file-path: /mockdata/account.dat
+    baiCode-file-path: /mockdata/baicodes.dat
+  out-data:
+    out-file-path: /output/
+  system-environment:
+    host: "sftp.example.com"
+    user: "sftp-user"
+    key: "sftp-private-key"
+  spl-report:
+     template-file-name: spl/Spl_Report_feed_template.ftl
+     feed-names: ACON,CHAN
+     schedule: 0 0 12 * * ?  # Runs every day at 12:00 PM (Cron Expression)
+     account-file-path: /mockdata/account.dat
+     baiCode-file-path: /mockdata/baicodes.dat
+     companyName-file-path: /mockdata/company.dat
+     out-file-path: /output/
+     remote-file-location: /remote/path/
+file:
+  output-dir: /output/

@@ -1,0 +1,78 @@
+package com.dvtech.maker.utill;
+import freemarker.template.*;
+import java.io.*;
+import java.util.*;
+
+public class FreeMarkerTemplateGenerator {
+
+    public static void main(String[] args) {
+        try {
+            // Step 1: Configure FreeMarker
+            Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
+            cfg.setDirectoryForTemplateLoading(new File(".")); // Current directory
+            cfg.setDefaultEncoding("UTF-8");
+            cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+
+            // Step 2: Prepare Data for Template
+            List<Map<String, Object>> reports = new ArrayList<>();
+
+            // Sample data for two reports
+            reports.add(createReport("H90836882                       000001          PAGE 1",
+                    Arrays.asList(
+                            "D00000001       WW GRAINGER 0901",
+                            "D00000002       ACH CASH CONCENTRATION",
+                            "D00000003       REPORTED AS OF 2025-02-12",
+                            "D00000004       PRINTED ON 2025-02-12",
+                            "D00000005       ACCOUNT 00000000000054070 WW GRAINGER 0901",
+                            "D00000006       FR/ABA    UNIT BANK DDA      UNIT      UNIT NAME    AMOUNT",
+                            "D00000007       -----------------------------------------------------------",
+                            "D00000008       995660     0000632579915   98788      GRAINGER       282.38",
+                            "D00000009       069056     0000165206389   17318      GRAINGER       157.68",
+                            "D00000010       194179     0000677787565   42516      GRAINGER       217.96",
+                            "D00000011       DEPOSIT ACCOUNT NUMBER: 00000000000054070  DEPOSIT TOTAL: 658.02",
+                            "D00000012       TOTAL CREDITS: 658.02  TOTAL DEBITS: .00"),
+                    "T90836882       00012\nEAOC000001"));
+
+            reports.add(createReport("H90836884                       000002          PAGE 1",
+                    Arrays.asList(
+                            "D00000001       WW GRAINGER 0901",
+                            "D00000002       ACH CASH CONCENTRATION",
+                            "D00000003       REPORTED AS OF 2025-02-12",
+                            "D00000004       PRINTED ON 2025-02-12",
+                            "D00000005       ACCOUNT 00000000000034070 WW GRAINGER 0901",
+                            "D00000006       FR/ABA    UNIT BANK DDA      UNIT      UNIT NAME    AMOUNT",
+                            "D00000007       -----------------------------------------------------------",
+                            "D00000008       995660     0000632579915   98788      GRAINGER       282.38",
+                            "D00000009       069056     0000165206389   17318      GRAINGER       157.68",
+                            "D00000010       194179     0000677787565   42516      GRAINGER       217.96",
+                            "D00000011       194179     0000677787565   42516      GRAINGER       100.00",
+                            "D00000012       DEPOSIT ACCOUNT NUMBER: 00000000000034070  DEPOSIT TOTAL: 758.02",
+                            "D00000013       TOTAL CREDITS: 658.02  TOTAL DEBITS: .00"),
+                    "T90836884       00013\nEAOC000002"));
+
+            // Step 3: Create Template Model
+            Map<String, Object> dataModel = new HashMap<>();
+            dataModel.put("reports", reports);
+
+            // Step 4: Load and Process Template
+            Template template = cfg.getTemplate("test.ftl");
+
+            try (Writer fileWriter = new FileWriter("output.txt")) {
+                template.process(dataModel, fileWriter);
+            }
+
+            System.out.println("File generated successfully: output.txt");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Map<String, Object> createReport(String header, List<String> details, String footer) {
+        Map<String, Object> report = new HashMap<>();
+        report.put("header", header);
+        report.put("details", details);
+        report.put("footer", footer);
+        return report;
+    }
+}
