@@ -1,14 +1,14 @@
 package com.dvtech.maker.service;
 
-import com.dvtech.maker.test.ReportGenerator;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import com.dvtech.maker.model.Transaction;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -39,7 +39,8 @@ public class MockSplReportFeedGeneratorService {
     private List<String> splReportFeedNames;
     @Value("${bls-file-feed.spl-report.baiCode-file-path}")
     private String baiCodeFilePath;
-
+    @Autowired
+    private Configuration freemarkerConfig;
     @Value("${bls-file-feed.spl-report.out-file-path}")
     private String outputDirPath;
    // private final Configuration freemarkerConfig;
@@ -48,22 +49,14 @@ public class MockSplReportFeedGeneratorService {
     private static final AtomicInteger totalLines = new AtomicInteger(0);
     private static final Random RANDOM = new Random();
     private static final AtomicInteger sequenceCounter = new AtomicInteger(1);
-    private static Configuration freemarkerConfig;
+
     // Stores company codes and names from file
     private Map<String, String> companyMap = new HashMap<>();
-    @PostConstruct
-    public void init() {
-        // This method will be called automatically after the bean is initialized
-        loadCompanyData();
-        generateSplReportFeed();
-    }
-    static {
-        freemarkerConfig = new Configuration(Configuration.VERSION_2_3_31);
-        freemarkerConfig.setClassLoaderForTemplateLoading(ReportGenerator.class.getClassLoader(), "templates");
-    }
-    @Scheduled(cron = "$(bls-file-feed.spl-report.schedule}")
+
+   //@Scheduled(cron = "${bls-file-feed.advice.schedule}")
     public void generateSplReportFeed() {
         try{
+            loadCompanyData();
             splReportFeedNames.forEach(this::generateFile);
         }
         catch (Exception e) {
@@ -75,6 +68,7 @@ public class MockSplReportFeedGeneratorService {
         try {
             if(splReportFeedName != null) {
 
+                log.info("File Path -->", accountFilePath);
                 List<Long> accountNumbers = readFileLines(Paths.get(new DefaultResourceLoader().getResource(accountFilePath).getFile().getAbsolutePath()).toString());
                 List<Map<String, Object>> reports = generateReports(accountNumbers);
 
@@ -100,6 +94,7 @@ public class MockSplReportFeedGeneratorService {
     }
 
     private  List<Map<String, Object>> generateReports(List<Long> accountNumbers) {
+
 
         List<Map<String, Object>> reports = new ArrayList<>();
         String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)).toUpperCase();
@@ -190,7 +185,7 @@ public class MockSplReportFeedGeneratorService {
             // Write File Header first
             writer.write(generateFileHeader(fileName));
             writer.newLine();
-            Template template = freemarkerConfig.getTemplate("reportTemplate.ftl");
+            Template template = freemarkerConfig.getTemplate(templateFileName);
             for (Map<String, Object> report : reports) {
                 StringWriter stringWriter = new StringWriter();
                 template.process(report, stringWriter);

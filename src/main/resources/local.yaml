@@ -2,9 +2,10 @@ bls-file-feed:
   advice:
     template-file-name:  adv/Advice_feed_template.ftl
     feed-names: ARH,BTR,BTS
-    schedule: 0 0 3-22 ? * MON-FRI
+    schedule: "*/2 * * * * *"
     out-file-name: output.dat
     remote-file-location: /remote/path/
+    out-file-location: output/
   input-data:
     account-file-path: /mockdata/account.dat
     baiCode-file-path: /mockdata/baicodes.dat
@@ -16,8 +17,18 @@ bls-file-feed:
     key: "sftp-private-key"
   spl-report:
      template-file-name: spl/Spl_Report_feed_template.ftl
-     feed-names: ACON,CHAN
-     schedule: 0 0 12 * * ?  # Runs every day at 12:00 PM (Cron Expression)
+     adellTemplate-file-name: adell/adellTemplate.ftl
+     feed-names: ADELL
+     schedule: "*/2 * * * * *"
+     account-file-path: /mockdata/account.dat
+     baiCode-file-path: /mockdata/baicodes.dat
+     companyName-file-path: /mockdata/company.dat
+     out-file-path: src/main/resources/output
+     remote-file-location: /remote/path/
+  adell-report:
+     template-file-name: adell/adellTemplate.ftl
+     feed-names: ADELL,CHAN
+     schedule: "*/3 * * * * *"  # Runs every day at 12:00 PM (Cron Expression)
      account-file-path: /mockdata/account.dat
      baiCode-file-path: /mockdata/baicodes.dat
      companyName-file-path: /mockdata/company.dat

@@ -1,0 +1,33 @@
+LADELL20250223174816TNT      550
+H31296733                                          000001
+D0000011     DATE: 02-23-25   ACH DELETION REPORT - THE NORTHERN TRUST COMPANY          PAGE 1
+D0000020              LINCOLN LIFE
+D000003              COMPANY: 135847320
+D000004               ATTN: MICHELLE JURY
+D000005              1401 S HARRISON ST 6H STOP 15
+D000006              FORT WAYNE, IN 46802
+D000007
+D0000080
+D000009    INDIVIDUAL ID       INDIVIDUAL NAME       TC      CREDIT AMOUNT    DEBIT AMOUNT   ITEM COUNT     ABA #           ACCOUNT NUMBER
+D000010     --------------------------------------------------------------------------------------------------------------------------------
+D000012 673227696       GINA J ERRIGO      15      5,657.63       5,657.63      1       126291542      0000031296733
+D000013                         FILE REFERENCE NUMBER: 291948491
+D000014                  DETAIL DELETIONS TOTAL  102633037                     102633037         7
+D000015    DELETIONS TOTAL102633037                            102633037         7
+T31296733                                          000015
+H00124567                                          000002
+D0000161     DATE: 02-23-25   ACH DELETION REPORT - THE NORTHERN TRUST COMPANY          PAGE 1
+D0000170              LINCOLN LIFE
+D000018              COMPANY: 135847320
+D000019               ATTN: MICHELLE JURY
+D000020              1401 S HARRISON ST 6H STOP 15
+D000021              FORT WAYNE, IN 46802
+D000022
+D0000230
+D000024    INDIVIDUAL ID       INDIVIDUAL NAME       TC      CREDIT AMOUNT    DEBIT AMOUNT   ITEM COUNT     ABA #           ACCOUNT NUMBER
+D000025     --------------------------------------------------------------------------------------------------------------------------------
+D000027 389224646       GINA J ERRIGO      81      8,345.59       8,345.59      1       683244581      0000000124567
+D000028                         FILE REFERENCE NUMBER: 021060417
+D000029                  DETAIL DELETIONS TOTAL  194194144                     194194144         7
+D000030    DELETIONS TOTAL194194144                            194194144         7
+T00124567                                          000030

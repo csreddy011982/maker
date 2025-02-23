@@ -1,0 +1,23 @@
+LADEL7022170792858079319TNT       550
+H31296733                         000021
+D000021 DETAIL DATE: 02-23-25   ACH DELETION REPORT - THE NORTHERN TRUST COMPANY          PAGE 1
+D000021            LINCOLN LIFE
+D000021             COMPANY: 135847320
+D000021             ATTN: MICHELLE JURY
+D000021             1401 S HARRISON ST 6H STOP 15
+D000021             FORT WAYNE, IN 46802
+D000021
+D000021
+D000021             INDIVIDUAL ID       INDIVIDUAL NAME       TC      CREDIT AMOUNT    DEBIT AMOUNT   ITEM COUNT     ABA #           ACCOUNT NUMBER
+D000021             -------------------------------------------------------------------------------------------------------------
+D000021             954511475           GINA J ERRIGO         32        5,000.00         0.00        1        841202582   31,296,733
+D000021                                 FILE REFERENCE NUMBER: 000031296733
+D000021             954511475           GINA J ERRIGO         32        5,000.00         0.00        1        841202582   31,296,733
+D000021                                 FILE REFERENCE NUMBER: 000031296733
+D000021             954511475           GINA J ERRIGO         32        5,000.00         0.00        1        841202582   31,296,733
+D000021                                 FILE REFERENCE NUMBER: 000031296733
+D000021           DETAIL DELETIONS TOTAL                         15,000.00       .00
+D000021           DELETIONS TOTAL                                15,000.00       .00
+
+T31296733            000021
+

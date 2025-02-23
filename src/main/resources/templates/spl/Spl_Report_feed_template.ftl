@@ -1,7 +1,8 @@
-<#list reports as report>
-${report.header}
-<#list report.details as detail>
+<#-- File Header -->
+${header}
+<#-- Iterate over details -->
+<#list details as detail>
 ${detail}
 </#list>
-${report.footer}
-</#list>
+<#-- File Footer -->
+${footer}
