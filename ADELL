@@ -1,33 +1,70 @@
-LADELL20250223174816TNT      550
-H31296733                                          000001
-D0000011     DATE: 02-23-25   ACH DELETION REPORT - THE NORTHERN TRUST COMPANY          PAGE 1
-D0000020              LINCOLN LIFE
-D000003              COMPANY: 135847320
-D000004               ATTN: MICHELLE JURY
-D000005              1401 S HARRISON ST 6H STOP 15
-D000006              FORT WAYNE, IN 46802
-D000007
-D0000080
-D000009    INDIVIDUAL ID       INDIVIDUAL NAME       TC      CREDIT AMOUNT    DEBIT AMOUNT   ITEM COUNT     ABA #           ACCOUNT NUMBER
-D000010     --------------------------------------------------------------------------------------------------------------------------------
-D000012 673227696       GINA J ERRIGO      15      5,657.63       5,657.63      1       126291542      0000031296733
-D000013                         FILE REFERENCE NUMBER: 291948491
-D000014                  DETAIL DELETIONS TOTAL  102633037                     102633037         7
-D000015    DELETIONS TOTAL102633037                            102633037         7
-T31296733                                          000015
-H00124567                                          000002
-D0000161     DATE: 02-23-25   ACH DELETION REPORT - THE NORTHERN TRUST COMPANY          PAGE 1
-D0000170              LINCOLN LIFE
-D000018              COMPANY: 135847320
-D000019               ATTN: MICHELLE JURY
-D000020              1401 S HARRISON ST 6H STOP 15
-D000021              FORT WAYNE, IN 46802
-D000022
-D0000230
-D000024    INDIVIDUAL ID       INDIVIDUAL NAME       TC      CREDIT AMOUNT    DEBIT AMOUNT   ITEM COUNT     ABA #           ACCOUNT NUMBER
-D000025     --------------------------------------------------------------------------------------------------------------------------------
-D000027 389224646       GINA J ERRIGO      81      8,345.59       8,345.59      1       683244581      0000000124567
-D000028                         FILE REFERENCE NUMBER: 021060417
-D000029                  DETAIL DELETIONS TOTAL  194194144                     194194144         7
-D000030    DELETIONS TOTAL194194144                            194194144         7
-T00124567                                          000030
+LADELL20250223214538TNT                550
+H31296733                            000001
+D000001  DATE: 02-23-25   ACH DELETION REPORT - THE NORTHERN TRUST COMPANY          PAGE 1
+D000002            LINCOLN LIFE
+D000003             COMPANY: 135847320
+D000004             ATTN: MICHELLE JURY
+D000005             1401 S HARRISON ST 6H STOP 15
+D000006             FORT WAYNE, IN 46802
+D000007             INDIVIDUAL ID       INDIVIDUAL NAME       TC      CREDIT AMOUNT    DEBIT AMOUNT   ITEM COUNT     ABA #           ACCOUNT NUMBER
+D000008             -------------------------------------------------------------------------------------------------------------
+D000009             685176584           ANGELO L DICKINSON        32       3960.43              0.00            1              956435717      0000031296733
+D000010                                 FILE REFERENCE NUMBER: 221735564
+T31296733         FreeMarker template error (DEBUG mode; use RETHROW in production!):
+The following has evaluated to null or missing:
+==> detail  [in template "spl/Spl_Report_feed_template.ftl" at line 26, column 35]
+
+----
+Tip: If the failing expression is known to legally refer to something that's sometimes null or missing, either specify a default value like myOptionalVar!myDefault, or use <#if myOptionalVar??>when-present<#else>when-missing</#if>. (These only cover the last step of the expression; to cover the whole expression, use parenthesis: (myOptionalVar.foo)!myDefault, (myOptionalVar.foo)??
+----
+
+----
+FTL stack trace ("~" means nesting-related):
+	- Failed at: ${detail.recordNumber1 - 1}  [in template "spl/Spl_Report_feed_template.ftl" at line 26, column 33]
+----
+
+Java stack trace (for programmers):
+----
+freemarker.core.InvalidReferenceException: [... Exception message was already printed; see it above ...]
+	at freemarker.core.InvalidReferenceException.getInstance(InvalidReferenceException.java:134)
+	at freemarker.core.UnexpectedTypeException.newDescriptionBuilder(UnexpectedTypeException.java:85)
+	at freemarker.core.UnexpectedTypeException.<init>(UnexpectedTypeException.java:48)
+	at freemarker.core.NonHashException.<init>(NonHashException.java:49)
+	at freemarker.core.Dot._eval(Dot.java:57)
+	at freemarker.core.Expression.eval(Expression.java:101)
+	at freemarker.core.Expression.evalToNumber(Expression.java:150)
+	at freemarker.core.ArithmeticExpression._eval(ArithmeticExpression.java:51)
+	at freemarker.core.Expression.eval(Expression.java:101)
+	at freemarker.core.DollarVariable.calculateInterpolatedStringOrMarkup(DollarVariable.java:104)
+	at freemarker.core.DollarVariable.accept(DollarVariable.java:63)
+	at freemarker.core.Environment.visit(Environment.java:344)
+	at freemarker.core.Environment.visit(Environment.java:386)
+	at freemarker.core.IteratorBlock$IterationContext.executedNestedContentForCollOrSeqListing(IteratorBlock.java:321)
+	at freemarker.core.IteratorBlock$IterationContext.executeNestedContent(IteratorBlock.java:271)
+	at freemarker.core.IteratorBlock$IterationContext.accept(IteratorBlock.java:244)
+	at freemarker.core.Environment.visitIteratorBlock(Environment.java:654)
+	at freemarker.core.IteratorBlock.acceptWithResult(IteratorBlock.java:108)
+	at freemarker.core.IteratorBlock.accept(IteratorBlock.java:94)
+	at freemarker.core.Environment.visit(Environment.java:344)
+	at freemarker.core.Environment.visit(Environment.java:350)
+	at freemarker.core.Environment.process(Environment.java:323)
+	at freemarker.template.Template.process(Template.java:383)
+	at com.dvtech.maker.service.MockAdeelReport.generateFileFromTemplate(MockAdeelReport.java:203)
+	at com.dvtech.maker.service.MockAdeelReport.generateFile(MockAdeelReport.java:79)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at com.dvtech.maker.service.MockAdeelReport.generateAdviceFeed(MockAdeelReport.java:52)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.scheduling.support.ScheduledMethodRunnable.runInternal(ScheduledMethodRunnable.java:130)
+	at org.springframework.scheduling.support.ScheduledMethodRunnable.lambda$run$2(ScheduledMethodRunnable.java:124)
+	at io.micrometer.observation.Observation.observe(Observation.java:498)
+	at org.springframework.scheduling.support.ScheduledMethodRunnable.run(ScheduledMethodRunnable.java:124)
+	at org.springframework.scheduling.config.Task$OutcomeTrackingRunnable.run(Task.java:85)
+	at org.springframework.scheduling.support.DelegatingErrorHandlingRunnable.run(DelegatingErrorHandlingRunnable.java:54)
+	at org.springframework.scheduling.concurrent.ReschedulingRunnable.run(ReschedulingRunnable.java:96)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)

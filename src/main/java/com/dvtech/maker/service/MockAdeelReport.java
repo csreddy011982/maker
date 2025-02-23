@@ -1,6 +1,5 @@
 package com.dvtech.maker.service;
 
-import com.dvtech.maker.model.TransactionAd;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -17,7 +16,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -32,90 +30,177 @@ public class MockAdeelReport {
 
     @Value("${bls-file-feed.spl-report.account-file-path}")
     private String accountFilePath;
-    @Value("${bls-file-feed.spl-report.baiCode-file-path}")
-    private String baiCodeFilePath;
-
     @Value("${bls-file-feed.spl-report.feed-names}")
     private List<String> splReportFeedNames;
-
+    @Value("${bls-file-feed.spl-report.template-file-name}")
+    private String templateFileName;
     @Value("${bls-file-feed.spl-report.out-file-path}")
     private String outputDirPath;
+
+    @Value("${bls-file-feed.advice.schedule}")
+    private String cronSchedule;
 
     @Autowired
     private Configuration freemarkerConfig;
 
-    private static final AtomicInteger sequenceCounter = new AtomicInteger(0);
-    private static final Random RANDOM = new Random();
-    private final AtomicInteger recordSequence = new AtomicInteger(0);
-    private static final AtomicInteger totalLines = new AtomicInteger(0);
     private static final AtomicInteger transactionSequence = new AtomicInteger(0);
-    private static final DecimalFormat df = new DecimalFormat("000000");
-    /**
-     * Define a Map to associate each feed name with its respective template file.
-     */
-    private static final Map<String, String> TEMPLATE_MAPPING = new HashMap<>();
-
-    static {
-        TEMPLATE_MAPPING.put("ACON", "ACONTemplate.ftl");
-        TEMPLATE_MAPPING.put("ADEEL", "ADEELTemplate.ftl");
-        TEMPLATE_MAPPING.put("SPEL", "SPLTemplate.ftl");
-    }
-
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00");
+    private static final AtomicInteger recordSequence = new AtomicInteger(0);
+    private static final AtomicInteger totalLines = new AtomicInteger(0);
     @Scheduled(cron = "${bls-file-feed.advice.schedule}")
     public void generateAdviceFeed() {
         splReportFeedNames.forEach(this::generateFile);
     }
 
-    private void generateFile(String adviceFeedName) {
+    public void generateFile(String adviceFeedName) {
+        log.info("Scheduled Job Started for ACH Deletion Report");
+
         try {
-            List<Long> accountNumbers = readFileLines(Paths.get(new DefaultResourceLoader().getResource(accountFilePath).getFile().getAbsolutePath()).toString());
-            // Build the data model for the template
+            File accountFile = new DefaultResourceLoader().getResource(accountFilePath).getFile();
+            List<Long> accountNumbers = readFileLines(accountFile.getAbsolutePath());
+
+            if (accountNumbers.isEmpty()) {
+                log.warn("No accounts found in account.dat. Skipping file generation.");
+                return;
+            }
+
             Map<String, Object> dataModel = buildDataModel(adviceFeedName, accountNumbers);
-                 // Retrieve the template file dynamically based on the feed name
-            String templateFileName = TEMPLATE_MAPPING.getOrDefault(adviceFeedName, "defaultTemplate.ftl");
-            generateFileFromTemplate(adviceFeedName, templateFileName, dataModel);
-            recordSequence.set(0);
-            transactionSequence.set(0);
-            totalLines.set(0);
-            log.info("File generated successfully: {}", adviceFeedName);
+            log.info("Data Model Created: {}", dataModel);
+
+            if (dataModel.isEmpty()) {
+                log.warn("Data model is empty, skipping file writing.");
+                return;
+            }
+
+            String outputFileName = outputDirPath + "LADEL" + getFileCreationDateTime() + "TNT.DAT";
+            log.info("Writing data to file: {}", outputFileName);
+
+            //generateFileFromTemplate(outputFileName, "defaultTemplate.ftl", dataModel);
+            generateFileFromTemplate("ADELL", dataModel);
+
         } catch (Exception e) {
-            log.error("Error Occurred", e);
+            log.error("Error Occurred while generating file", e);
         }
     }
-    private Map<String, Object> buildDataModel(String adviceFeedName, List<Long> accountNumbers) {
+
+
+    private Map<String, Object> buildDataModel(String adviceFeedName,List<Long> accountNumbers) {
         Map<String, Object> dataModel = new HashMap<>();
+
+        long accountNumber = accountNumbers.isEmpty() ? 0 : accountNumbers.get(0);
         dataModel.put("firstLine", firstHeaderRecordMap(adviceFeedName));
-        dataModel.put("transactions", accountNumbers.stream()
-                .map(this::createTransactionRecord)
-                .collect(Collectors.toList()));
+       // dataModel.put("header", createHeader(accountNumber, recordSequence.incrementAndGet()));
+
+        List<Map<String, Object>> transactions = accountNumbers.stream()
+                .map(this::createTransactionRecords)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        if (transactions.isEmpty()) {
+            log.warn("No transactions were created, skipping file generation.");
+            return Collections.emptyMap();
+        }
+
+        double totalCreditAmount = transactions.stream()
+                .map(t -> t.get("creditAmount"))
+                .filter(Objects::nonNull)
+                .map(String.class::cast)
+                .mapToDouble(Double::parseDouble)
+                .sum();
+
+        double totalDebitAmount = transactions.stream()
+                .map(t -> t.get("debitAmount"))
+                .filter(Objects::nonNull)
+                .map(String.class::cast)
+                .mapToDouble(Double::parseDouble)
+                .sum();
+
+        int totalRecords = transactionSequence.get();
+        dataModel.put("transactions", transactions);
+        dataModel.put("totalCreditAmount", formatAmount(totalCreditAmount));
+        dataModel.put("totalDebitAmount", formatAmount(totalDebitAmount));
+        dataModel.put("totalRecordNumber", (totalRecords ));
+        dataModel.put("trailer", createTrailer(totalRecords + 2));
+        recordSequence.set(0);
+        transactionSequence.set(0);
+        totalLines.set(0);
         return dataModel;
     }
-    private Map<String, Object> createTransactionRecord(long accountNumber) {
-        String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM-dd-yy", Locale.ENGLISH)).toUpperCase();
-        String amount = formatAmount(Math.random() * 1000);
 
-        Map.Entry<String, String> randomEntry = (Map.Entry<String, String>) baiCodeMap().entrySet()
-                .toArray()[new Random().nextInt(baiCodeMap().size())];
 
-        Map<String, Object> transaction = new HashMap<>();
-        transaction.put("header", Collections.singletonList(createHeaderRecordMap(accountNumber)));
-        transaction.put("company",Collections.singletonList(createCompanyRecordMap(accountNumber)) );
-        transaction.put("details",Collections.singletonList(createTransactionDetailRecord(accountNumber)) );
-        transaction.put("detailsDeleted",Collections.singletonList(createDeletedDetailRecord(accountNumber)) );
-        transaction.put("trailer",Collections.singletonList(createTrailerRecordMap(accountNumber)));
-        return transaction;
+
+    private Map<String, Object> createHeader(long accountNumber, int recordSequence) {
+        Map<String, Object> header = new HashMap<>();
+        // ✅ Store dynamic values in header
+        header.put("recordNumber", String.format("%06d", recordSequence));
+         // Ensures 13-digit formatting
+        header.put("accountNumber", String.format("%08d", accountNumber));
+        header.put("creationDate", getFileCreationDate());
+        totalLines.incrementAndGet();
+        return header;
     }
-    private Map<String, Object> firstHeaderRecordMap(String adviceFeedName) {
-        Map<String, Object> record = new HashMap<>();
-        record.put("adviceFeedName", adviceFeedName);
-        record.put("creationDate", getFileCreationDateTime());
-        return record;
+
+
+    private List<Map<String, Object>> createTransactionRecords(Long accountNumber) {
+        List<Map<String, Object>> transactionList = new ArrayList<>();
+        Map<String, Object> accountTransaction = new HashMap<>();
+
+        // ✅ Add recordNumber at the transaction level
+        accountTransaction.put("account", String.format("%08d", accountNumber));
+        accountTransaction.put("sequence", String.format("%06d", recordSequence.incrementAndGet()));
+        accountTransaction.put("recordNumber", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("recordNumber1", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("recordNumber2", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("recordNumber3", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("recordNumber4", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("recordNumber5", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("recordNumber6", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("recordNumber7", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("creationDate", getFileCreationDate());
+        accountTransaction.put("accountNumber", String.format("%013d", accountNumber));
+
+        List<Map<String, Object>> detailsList = new ArrayList<>();
+        int numberOfTransactions = ThreadLocalRandom.current().nextInt(1, 4); // 1-3 transactions per account
+
+        for (int i = 0; i < numberOfTransactions; i++) {
+            Map<String, Object> detail = new HashMap<>();
+            detail.put("recordNumber", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+
+            detail.put("individualID", generateRandomID());
+            detail.put("individualName", getRandomName());
+            detail.put("tranCode", getRandomTransactionCode());
+            detail.put("creditAmount", generateRandomAmount());
+            detail.put("debitAmount", formatAmount(0.00));
+            detail.put("abaNumber", generateRandomABANumber());
+            detail.put("accountNumber", String.format("%013d", accountNumber));
+            detail.put("fileReferenceNumber", generateRandomFileReference());
+            detail.put("recordNumber1", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+            totalLines.incrementAndGet();
+            detailsList.add(detail);
+        }
+
+        // ✅ Ensure detailsList is added
+        accountTransaction.put("detailsList", detailsList);
+
+        // ✅ Add transaction object to the list
+        transactionList.add(accountTransaction);
+        recordSequence.set(0);
+        transactionSequence.set(0);
+       // totalLines.set(0);
+        return transactionList;
     }
-    private void generateFileFromTemplate(String outputFilePath, String templateFileName, Map<String, Object> dataModel) {
+
+
+
+    private Map<String, Object> createTrailer(int recordNumber) {
+        Map<String, Object> trailer = new HashMap<>();
+        trailer.put("recordNumber", formatRecordNumberWithD(recordNumber));
+        return trailer;
+    }
+    private void generateFileFromTemplate(String outputFilePath, Map<String, Object> dataModel) {
         try (Writer writer = new FileWriter(outputFilePath)) {
             Template template = freemarkerConfig.getTemplate(templateFileName);
             template.process(dataModel, writer);
-
         } catch (IOException | TemplateException e) {
             throw new RuntimeException("Error processing FreeMarker template: " + outputFilePath, e);
         }
@@ -123,130 +208,59 @@ public class MockAdeelReport {
 
     private List<Long> readFileLines(String filePath) throws IOException {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            return reader.lines().map(Long::parseLong).collect(Collectors.toList());
+            return reader.lines()
+                    .filter(line -> line.matches("\\d+"))
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
         }
     }
 
-
-    private Map<String, Object> createHeaderRecordMap(long accountNumber) {
-        Map<String, Object> record = new HashMap<>();
-        record.put("accountNumber", String.format("%08d", accountNumber));
-        record.put("recordSequenceNumber",  recordFormatNumber(recordSequence.incrementAndGet()));
-        totalLines.incrementAndGet();
-        return record;
+    private String formatRecordNumberWithD(int number) {
+        return String.format("D%06d", number);
     }
 
-    private Map<String, Object> createTrailerRecordMap(long accountNumber) {
-        Map<String, Object> record = new HashMap<>();
-        record.put("accountNumber", String.format("%08d", accountNumber));
-        record.put("lastDigit",  recordFormatNumber(transactionSequence.get()));
-        return record;
+    private String generateRandomID() {
+        return String.valueOf(ThreadLocalRandom.current().nextInt(100000000, 999999999));
     }
 
-    private Map<String, Object> createCompanyRecordMap(long accountNumber) {
-        Map<String, Object> record = new HashMap<>();
-        int pageCounter = 1;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yy");
-        String formattedDate = LocalDate.now().format(formatter);
-        record.put("transactionSequenceNumber", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        record.put("currentDate", formattedDate);
-        record.put("pageNumber",  pageCounter++);
-        record.put("lincolnLife", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        record.put("companyWithNumber", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        record.put("accountNumber",  String.format("%013d", accountNumber));
-        record.put("add", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        record.put("add1", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        record.put("add2", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        record.put("add3", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        record.put("add4", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        record.put("add5", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        record.put("add6", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        record.put("add7", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-
-        return record;
+    private String generateRandomAmount() {
+        double amount = ThreadLocalRandom.current().nextDouble(1000, 10000);
+        return DECIMAL_FORMAT.format(amount);
     }
 
-
-
-    private Map<String, Object> createDeletedDetailRecord(Long accountNumber) {
-        String individualID = UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 9);
-        String abaNumber = UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 9);
-        String fileReferenceNumber =  UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 9);
-        int tranCode = ThreadLocalRandom.current().nextInt(10, 100);
-        double randomAmount = ThreadLocalRandom.current().nextDouble(1000, 10000);
-        String formattedAmount = String.format("%,.2f", randomAmount);
-        Map<String, Object> detail = new HashMap<>();
-        detail.put("recordNumber", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        detail.put("totalCreditAmount", individualID);
-        detail.put("totalDebitAmount", individualID);
-        detail.put("sequenceFileReferenceNumber",transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        detail.put("deletionTotalCredit", individualID);
-        detail.put("deletionTotalDebit",fileReferenceNumber);
-        detail.put("totalCount",7);
-        totalLines.incrementAndGet();
-        return detail;
-    }
-    private Map<String, Object> createTransactionDetailRecord(Long accountNumber) {
-        String individualID = UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 9);
-        String abaNumber = UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 9);
-        String fileReferenceNumber =  UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 9);
-        int tranCode = ThreadLocalRandom.current().nextInt(10, 100);
-        double randomAmount = ThreadLocalRandom.current().nextDouble(1000, 10000);
-        String formattedAmount = String.format("%,.2f", randomAmount);
-        Map<String, Object> detail = new HashMap<>();
-        detail.put("recordNumber", transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        detail.put("individualID", individualID);
-        detail.put("individualName", "GINA J ERRIGO");
-        detail.put("tranCode", tranCode);
-        detail.put("creditAmount", formattedAmount);
-        detail.put("debitAmount", formattedAmount);
-        detail.put("itemCount","1");
-        detail.put("abaNumber", abaNumber);
-        detail.put("accountNumber", String.format("%013d", accountNumber));
-        detail.put("sequenceFileReferenceNumber",transationFormatRecordNumber(transactionSequence.incrementAndGet()));
-        detail.put("fileReferenceNumber",fileReferenceNumber);
-        totalLines.incrementAndGet();
-        return detail;
+    private String generateRandomABANumber() {
+        return String.valueOf(ThreadLocalRandom.current().nextInt(100000000, 999999999));
     }
 
-
-    private Map<String, String> createFloatRecord(int recordNumber, String amount) {
-        Map<String, String> floatRecord = new HashMap<>();
-        floatRecord.put("recordNumber", formatRecordNumber(recordNumber));
-        floatRecord.put("amount", amount);
-        totalLines.incrementAndGet();
-        return floatRecord;
+    private String generateRandomFileReference() {
+        return String.valueOf(ThreadLocalRandom.current().nextInt(221730000, 221739999));
     }
 
+    private int getRandomTransactionCode() {
+        int[] codes = {22, 32, 52};
+        return codes[ThreadLocalRandom.current().nextInt(codes.length)];
+    }
 
-    private String formatRecordNumber(int recordNumber) {
-        return String.format("%09d", recordNumber);
+    private String getRandomName() {
+        String[] names = {"GINA J ERRIGO", "CHARLOTTE ANDERSON", "JENNIFER J FITZPATRICK", "ANGELO L DICKINSON"};
+        return names[ThreadLocalRandom.current().nextInt(names.length)];
     }
-    private static String transationFormatRecordNumber(int recordNumber) {
-        return String.format("%06d", recordNumber);
+
+    private String formatAmount(double amount) {
+        return String.format("%10.2f", amount);
     }
-    private static String recordFormatNumber(int recordNumber) {
-        return String.format("%06d", recordNumber);
+
+    private String getFileCreationDate() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM-dd-yy"));
     }
 
     private String getFileCreationDateTime() {
         return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     }
-
-    private String formatAmount(double amount) {
-        return new DecimalFormat("000000000000.00").format(amount);
+    private Map<String, Object> firstHeaderRecordMap(String adviceFeedName) {
+        Map<String, Object> record = new HashMap<>();
+        record.put("adviceFeedName", adviceFeedName);
+        record.put("creationDate", getFileCreationDateTime());
+        return record;
     }
-    private Map<String, String> baiCodeMap() {
-        String filePath;
-        try {
-            filePath = new DefaultResourceLoader().getResource(baiCodeFilePath).getFile().getAbsolutePath();
-            return Files.lines(Paths.get(filePath))
-                    .map(line -> line.split("\\|"))
-                    .filter(parts -> parts.length == 2)
-                    .collect(Collectors.toMap(parts -> parts[0].trim(), parts -> parts[1].trim()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 }

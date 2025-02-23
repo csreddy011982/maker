@@ -23,7 +23,7 @@ bls-file-feed:
      account-file-path: /mockdata/account.dat
      baiCode-file-path: /mockdata/baicodes.dat
      companyName-file-path: /mockdata/company.dat
-     out-file-path: src/main/resources/output
+     out-file-path: /output/
      remote-file-location: /remote/path/
   adell-report:
      template-file-name: adell/adellTemplate.ftl
