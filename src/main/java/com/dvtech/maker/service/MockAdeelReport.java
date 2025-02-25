@@ -101,12 +101,7 @@ public class MockAdeelReport {
             return Collections.emptyMap();
         }
 
-        double totalCreditAmount = transactions.stream()
-                .map(t -> t.get("creditAmount"))
-                .filter(Objects::nonNull)
-                .map(String.class::cast)
-                .mapToDouble(Double::parseDouble)
-                .sum();
+
 
         double totalDebitAmount = transactions.stream()
                 .map(t -> t.get("debitAmount"))
@@ -117,10 +112,9 @@ public class MockAdeelReport {
 
         int totalRecords = transactionSequence.get();
         dataModel.put("transactions", transactions);
-        dataModel.put("totalCreditAmount", formatAmount(totalCreditAmount));
-        dataModel.put("totalDebitAmount", formatAmount(totalDebitAmount));
-        dataModel.put("totalRecordNumber", (totalRecords ));
-        dataModel.put("trailer", createTrailer(totalRecords + 2));
+        dataModel.put("trailer", createTrailerRecordMap(accountNumber));
+
+        //dataModel.put("trailer", createTrailer(totalRecords + 2));
         recordSequence.set(0);
         transactionSequence.set(0);
         totalLines.set(0);
@@ -161,24 +155,42 @@ public class MockAdeelReport {
 
         List<Map<String, Object>> detailsList = new ArrayList<>();
         int numberOfTransactions = ThreadLocalRandom.current().nextInt(1, 4); // 1-3 transactions per account
-
+        double totalCreditAmount = 0.0;
+        double totalDebitAmount = 0.0;
+        int totalItemCount = 0;
         for (int i = 0; i < numberOfTransactions; i++) {
+
             Map<String, Object> detail = new HashMap<>();
             detail.put("recordNumber", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
 
             detail.put("individualID", generateRandomID());
             detail.put("individualName", getRandomName());
             detail.put("tranCode", getRandomTransactionCode());
-            detail.put("creditAmount", generateRandomAmount());
-            detail.put("debitAmount", formatAmount(0.00));
+            double creditAmount = generateRandomAmount();
+            double debitAmount = 0.00;
+            detail.put("creditAmount", String.format("%,.2f", creditAmount));
+            detail.put("debitAmount", String.format("%,.2f", debitAmount));
+            int itemCount = generateRandomNumberForTwoDigit(); // Generate a two-digit itemCount
+            detail.put("itemCount", itemCount);
+
             detail.put("abaNumber", generateRandomABANumber());
             detail.put("accountNumber", String.format("%013d", accountNumber));
             detail.put("fileReferenceNumber", generateRandomFileReference());
             detail.put("recordNumber1", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+            totalCreditAmount += creditAmount;
+            totalDebitAmount += debitAmount;
+            totalItemCount += itemCount;
             totalLines.incrementAndGet();
             detailsList.add(detail);
         }
 
+        accountTransaction.put("deleteTotal", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("deleteTotal2", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("deleteTotal3", formatRecordNumber(transactionSequence.incrementAndGet()-1));
+        accountTransaction.put("totalCreditAmount", formatAmount(totalCreditAmount));
+        accountTransaction.put("totalDebitAmount", formatAmount(totalDebitAmount));
+        accountTransaction.put("totalItemCount", totalItemCount);
+        //accountTransaction.put("totalCreditAmount", formatAmount(totalCreditAmount));
         // ✅ Ensure detailsList is added
         accountTransaction.put("detailsList", detailsList);
 
@@ -186,10 +198,14 @@ public class MockAdeelReport {
         transactionList.add(accountTransaction);
         recordSequence.set(0);
         transactionSequence.set(0);
+        totalLines.set(0);
        // totalLines.set(0);
         return transactionList;
     }
 
+    private int generateRandomNumberForTwoDigit() {
+        return ThreadLocalRandom.current().nextInt(1, 11); // Upper bound is exclusive (11 means it goes up to 10)
+    }
 
 
     private Map<String, Object> createTrailer(int recordNumber) {
@@ -214,7 +230,9 @@ public class MockAdeelReport {
                     .collect(Collectors.toList());
         }
     }
-
+    private String formatRecordNumber(int number) {
+        return String.format("%06d", number);
+    }
     private String formatRecordNumberWithD(int number) {
         return String.format("D%06d", number);
     }
@@ -223,9 +241,9 @@ public class MockAdeelReport {
         return String.valueOf(ThreadLocalRandom.current().nextInt(100000000, 999999999));
     }
 
-    private String generateRandomAmount() {
-        double amount = ThreadLocalRandom.current().nextDouble(1000, 10000);
-        return DECIMAL_FORMAT.format(amount);
+    private double generateRandomAmount() {
+       // double amount = ThreadLocalRandom.current().nextDouble(1000, 10000);
+        return ThreadLocalRandom.current().nextDouble(1000, 10000);
     }
 
     private String generateRandomABANumber() {
@@ -262,5 +280,14 @@ public class MockAdeelReport {
         record.put("adviceFeedName", adviceFeedName);
         record.put("creationDate", getFileCreationDateTime());
         return record;
+    }
+    private Map<String, Object> createTrailerRecordMap(long accountNumber) {
+        Map<String, Object> record = new HashMap<>();
+        record.put("accountNumber", String.format("%08d", accountNumber));
+        record.put("lastDigit",  recordFormatNumber(transactionSequence.get()));
+        return record;
+    }
+    private static String recordFormatNumber(int recordNumber) {
+        return String.format("%06d", recordNumber);
     }
 }
