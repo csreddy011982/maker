@@ -1,23 +1,20 @@
-<!-- Header Record -->
-000000079|ACON|A|20250223124512
+LACON20250225153054TNT                550
+H31296733                            000001
+D0000001                            WW GRAINGER 0901          PAGE 1
+D0000002             ACH CASH CONCENTRATION
+D0000003             REPORTED AS OF FEB 25, 2025
+D0000004             PRINTED ON FEB 25, 2025
+D0000005             ACCOUNT 0000031296733 WW GRAINGER 0901
+D0000006             REDEPOSIT  / REJECT REPAIR ACTIVITY
+D0000007             AUTOMATED CLEARING HOUSE DEPOSIT VERIFICATION FOR: 0901
+D0000008             FR/ABA      UNIT BANK DDA      UNIT      UNIT NAME    AMOUNT
+D0000009             ------------------------------------------------------------
+D0000010           462000   0000073694063   40362        GRAINGER             868.91
+D0000011           881530   0000206003418   19551        GRAINGER             755.97
+D0000012           535548   0000484673245   02062        GRAINGER             419.46
+D0000013           DEPOSIT ACCOUNT NUMBER: 0000031296733                DEPOSIT TOTAL:    2044.34
+D0000014             TOTAL CREDITS:     2044.34                     TOTAL DEBITS:    951.54
+T31296733           000014
 
-<!-- Transaction Records -->
-000000089|0000031296733|32|122|000000080|
-20250223 12:45:12|000000000624.26|000000000000000000000000000000|
 
-<!-- Details Records -->
-D|~|000000036|~|ACH DESCRIPTION FOR THE 36                                                                                                                                                                                                                                     
 
-<!-- Float Records -->
-F|000000036|100|000000000624.26
-000000094|0000000124567|32|122|000000085|
-20250223 12:45:12|000000000150.36|000000000000000000000000000000|
-
-<!-- Details Records -->
-D|~|000000037|~|ACH DESCRIPTION FOR THE 37                                                                                                                                                                                                                                     
-
-<!-- Float Records -->
-F|000000037|100|000000000150.36
-
-<!-- Trailer Record -->
-Z|000000040|000000040|20250223124512

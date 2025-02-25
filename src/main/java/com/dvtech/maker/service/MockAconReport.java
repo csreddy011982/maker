@@ -25,16 +25,16 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class MockAdeelReport {
-    private static final Logger log = LoggerFactory.getLogger(MockAdeelReport.class);
+public class MockAconReport {
+    private static final Logger log = LoggerFactory.getLogger(MockAconReport.class);
 
-    @Value("${bls-file-feed.spl-adeel.account-file-path}")
+    @Value("${bls-file-feed.spl-acon.account-file-path}")
     private String accountFilePath;
-    @Value("${bls-file-feed.spl-adeel.feed-names}")
+    @Value("${bls-file-feed.spl-acon.feed-names}")
     private List<String> splReportFeedNames;
-    @Value("${bls-file-feed.spl-adeel.template-file-name}")
+    @Value("${bls-file-feed.spl-acon.template-file-name}")
     private String templateFileName;
-    @Value("${bls-file-feed.spl-adeel.out-file-path}")
+    @Value("${bls-file-feed.spl-acon.out-file-path}")
     private String outputDirPath;
 
 //    @Value("${bls-file-feed.advice.schedule}")
@@ -47,8 +47,7 @@ public class MockAdeelReport {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00");
     private static final AtomicInteger recordSequence = new AtomicInteger(0);
     private static final AtomicInteger totalLines = new AtomicInteger(0);
-
-   // @Scheduled(cron = "${bls-file-feed.spl-adeel.schedule}")
+    @Scheduled(cron = "${bls-file-feed.spl-acon.schedule}")
     public void generateAdviceFeed() {
         splReportFeedNames.forEach(this::generateFile);
     }
@@ -73,12 +72,12 @@ public class MockAdeelReport {
                 return;
             }
 
-            String outputFileName = outputDirPath + "LADEL" + getFileCreationDateTime() + "TNT.DAT";
+            String outputFileName = outputDirPath + "ACON" + getFileCreationDateTime() + "TNT.DAT";
 
 
             //generateFileFromTemplate(outputFileName, "defaultTemplate.ftl", dataModel);
-            generateFileFromTemplate("ADELL", dataModel);
-           // log.info("Writing data to file: {}", outputFileName);
+            generateFileFromTemplate("ACON", dataModel);
+            // log.info("Writing data to file: {}", outputFileName);
         } catch (Exception e) {
             log.error("Error Occurred while generating file", e);
         }
@@ -90,7 +89,7 @@ public class MockAdeelReport {
 
         long accountNumber = accountNumbers.isEmpty() ? 0 : accountNumbers.get(0);
         dataModel.put("firstLine", firstHeaderRecordMap(adviceFeedName));
-       // dataModel.put("header", createHeader(accountNumber, recordSequence.incrementAndGet()));
+        // dataModel.put("header", createHeader(accountNumber, recordSequence.incrementAndGet()));
 
         List<Map<String, Object>> transactions = accountNumbers.stream()
                 .map(this::createTransactionRecords)
@@ -128,7 +127,7 @@ public class MockAdeelReport {
         Map<String, Object> header = new HashMap<>();
         // ✅ Store dynamic values in header
         header.put("recordNumber", String.format("%06d", recordSequence));
-         // Ensures 13-digit formatting
+        // Ensures 13-digit formatting
         header.put("accountNumber", String.format("%08d", accountNumber));
         header.put("creationDate", getFileCreationDate());
         totalLines.incrementAndGet();
@@ -139,7 +138,7 @@ public class MockAdeelReport {
     private List<Map<String, Object>> createTransactionRecords(Long accountNumber) {
         List<Map<String, Object>> transactionList = new ArrayList<>();
         Map<String, Object> accountTransaction = new HashMap<>();
-
+        String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)).toUpperCase();
         // ✅ Add recordNumber at the transaction level
         accountTransaction.put("account", String.format("%08d", accountNumber));
         accountTransaction.put("sequence", String.format("%06d", recordSequence.incrementAndGet()));
@@ -151,46 +150,48 @@ public class MockAdeelReport {
         accountTransaction.put("recordNumber5", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
         accountTransaction.put("recordNumber6", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
         accountTransaction.put("recordNumber7", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("recordNumber8", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
         accountTransaction.put("creationDate", getFileCreationDate());
         accountTransaction.put("accountNumber", String.format("%013d", accountNumber));
-
+        accountTransaction.put("companyCode", "0901");
+        accountTransaction.put("currentDate",currentDate);
         List<Map<String, Object>> detailsList = new ArrayList<>();
         int numberOfTransactions = ThreadLocalRandom.current().nextInt(1, 4); // 1-3 transactions per account
-        double totalCreditAmount = 0.0;
-        double totalDebitAmount = 0.0;
-        int totalItemCount = 0;
-        for (int i = 0; i < numberOfTransactions; i++) {
 
+        double totalCreditAmount = 0.0; // Variable to store the total sum of credited amounts
+        double totalDebitAmount = 0.0;  // Variable to store the total sum of debited amounts
+
+        for (int i = 0; i < numberOfTransactions; i++) {
+            Random random = new Random();
+            double creditAmountValue = Math.random() * 1000; // Generate a random credit amount
+            double debitAmountValue = Math.random() * 500;  // Generate a random debit amount
+
+            String creditAmount = formatAmount(creditAmountValue); // Format for display
+            String debitAmount = formatAmount(debitAmountValue);
             Map<String, Object> detail = new HashMap<>();
             detail.put("recordNumber", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
 
-            detail.put("individualID", generateRandomID());
-            detail.put("individualName", getRandomName());
-            detail.put("tranCode", getRandomTransactionCode());
-            double creditAmount = generateRandomAmount();
-            double debitAmount = 0.00;
-            detail.put("creditAmount", String.format("%,.2f", creditAmount));
-            detail.put("debitAmount", String.format("%,.2f", debitAmount));
-            int itemCount = generateRandomNumberForTwoDigit(); // Generate a two-digit itemCount
-            detail.put("itemCount", itemCount);
+            detail.put("frAba", String.format("%06d", random.nextInt(999999)));
+            detail.put("unitBankDDA", String.format("%013d", random.nextInt(999999999)));
+            detail.put("unit", String.format("%05d", random.nextInt(99999)));
+            detail.put("unitName","GRAINGER");
+            detail.put("creditAmount", creditAmount);
+            detail.put("debitAmount", debitAmount);
 
-            detail.put("abaNumber", generateRandomABANumber());
-            detail.put("accountNumber", String.format("%013d", accountNumber));
-            detail.put("fileReferenceNumber", generateRandomFileReference());
-            detail.put("recordNumber1", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
-            totalCreditAmount += creditAmount;
-            totalDebitAmount += debitAmount;
-            totalItemCount += itemCount;
+            // Add to total sums
+            totalCreditAmount += creditAmountValue;
+            totalDebitAmount += debitAmountValue;
+
             totalLines.incrementAndGet();
             detailsList.add(detail);
         }
-
-        accountTransaction.put("deleteTotal", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
-        accountTransaction.put("deleteTotal2", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
-        accountTransaction.put("deleteTotal3", formatRecordNumber(transactionSequence.incrementAndGet()-1));
+        accountTransaction.put("deposit", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("total", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
+        accountTransaction.put("lastEndRecord", formatRecordNumber(transactionSequence.incrementAndGet()-1));
         accountTransaction.put("totalCreditAmount", formatAmount(totalCreditAmount));
         accountTransaction.put("totalDebitAmount", formatAmount(totalDebitAmount));
-        accountTransaction.put("totalItemCount", totalItemCount);
+
+
         //accountTransaction.put("totalCreditAmount", formatAmount(totalCreditAmount));
         // ✅ Ensure detailsList is added
         accountTransaction.put("detailsList", detailsList);
@@ -200,7 +201,7 @@ public class MockAdeelReport {
         recordSequence.set(0);
         transactionSequence.set(0);
         totalLines.set(0);
-       // totalLines.set(0);
+        // totalLines.set(0);
         return transactionList;
     }
 
@@ -243,7 +244,7 @@ public class MockAdeelReport {
     }
 
     private double generateRandomAmount() {
-       // double amount = ThreadLocalRandom.current().nextDouble(1000, 10000);
+        // double amount = ThreadLocalRandom.current().nextDouble(1000, 10000);
         return ThreadLocalRandom.current().nextDouble(1000, 10000);
     }
 

@@ -15,9 +15,8 @@ bls-file-feed:
     host: "sftp.example.com"
     user: "sftp-user"
     key: "sftp-private-key"
-  spl-report:
-     template-file-name: spl/Spl_Report_feed_template.ftl
-     adellTemplate-file-name: adell/adellTemplate.ftl
+  spl-adeel:
+     template-file-name: spl/AdeelTemplate.ftl
      feed-names: ADELL
      schedule: "*/2 * * * * *"
      account-file-path: /mockdata/account.dat
@@ -25,6 +24,15 @@ bls-file-feed:
      companyName-file-path: /mockdata/company.dat
      out-file-path: /output/
      remote-file-location: /remote/path/
+  spl-acon:
+    template-file-name: spl/AconTemplate.ftl
+    feed-names: ACON
+    schedule: "*/2 * * * * *"
+    account-file-path: /mockdata/account.dat
+    baiCode-file-path: /mockdata/baicodes.dat
+    companyName-file-path: /mockdata/company.dat
+    out-file-path: /output/
+    remote-file-location: /remote/path/
   adell-report:
      template-file-name: adell/adellTemplate.ftl
      feed-names: ADELL,CHAN
