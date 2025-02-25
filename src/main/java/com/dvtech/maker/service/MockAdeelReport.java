@@ -234,7 +234,7 @@ public class MockAdeelReport {
         return String.format("%06d", number);
     }
     private String formatRecordNumberWithD(int number) {
-        return String.format("D%06d", number);
+        return String.format("D%07d", number);
     }
 
     private String generateRandomID() {

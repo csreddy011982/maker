@@ -73,7 +73,8 @@ public class MockSplReportFeedGeneratorService {
                 List<Map<String, Object>> reports = generateReports(accountNumbers);
 
                 // Write to file with file header
-                writeToFile(splReportFeedName, reports);
+                //writeToFile(splReportFeedName, reports);
+                generateFileFromTemplate(splReportFeedName,reports);
             }
             else {
                 log.error("Special Report Feed NAME Null");
@@ -173,6 +174,22 @@ public class MockSplReportFeedGeneratorService {
         report.put("footer", footer);
         return report;
     }
+
+    private void generateFileFromTemplate(String outputFilePath, List<Map<String, Object>> reports) {
+        try (Writer writer = new FileWriter(outputFilePath)) {
+            Template template = freemarkerConfig.getTemplate(templateFileName);
+
+            // Wrap the list into a map to match the expected data model format
+            Map<String, Object> dataModel = new HashMap<>();
+            dataModel.put("reports", reports);
+
+            // Process the template
+            template.process(dataModel, writer);
+        } catch (IOException | TemplateException e) {
+            throw new RuntimeException("Error processing FreeMarker template: " + outputFilePath, e);
+        }
+    }
+
     private  void writeToFile(String fileName, List<Map<String, Object>> reports) {
         // Generate timestamp in the format "MMM_dd_yyyy_HHmmss"
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")).toUpperCase();
