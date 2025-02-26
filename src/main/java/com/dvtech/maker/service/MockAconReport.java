@@ -11,7 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -215,7 +216,15 @@ public class MockAconReport {
         trailer.put("recordNumber", formatRecordNumberWithD(recordNumber));
         return trailer;
     }
-    private void generateFileFromTemplate(String outputFilePath, Map<String, Object> dataModel) {
+
+
+    private void generateFileFromTemplate(String baseFileName, Map<String, Object> dataModel) {
+        // Generate timestamp in "yyyyMMddHHmmss" format
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+
+        // Append timestamp to the base file name
+        String outputFilePath = String.format("%s_%s.DAT", baseFileName, timestamp);
+
         try (Writer writer = new FileWriter(outputFilePath)) {
             Template template = freemarkerConfig.getTemplate(templateFileName);
             template.process(dataModel, writer);
@@ -223,6 +232,7 @@ public class MockAconReport {
             throw new RuntimeException("Error processing FreeMarker template: " + outputFilePath, e);
         }
     }
+
 
     private List<Long> readFileLines(String filePath) throws IOException {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
