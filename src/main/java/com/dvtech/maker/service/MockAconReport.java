@@ -224,12 +224,21 @@ public class MockAconReport {
 
         // Append timestamp to the base file name
         String outputFilePath = String.format("%s_%s.DAT", baseFileName, timestamp);
+        String outputMarkerFilePath = String.format("%s_%s.MKR", baseFileName, timestamp);
 
         try (Writer writer = new FileWriter(outputFilePath)) {
             Template template = freemarkerConfig.getTemplate(templateFileName);
             template.process(dataModel, writer);
         } catch (IOException | TemplateException e) {
             throw new RuntimeException("Error processing FreeMarker template: " + outputFilePath, e);
+        }
+        try {
+            File markerFile = new File(outputMarkerFilePath);
+            if (markerFile.createNewFile()) {
+                System.out.println("Marker file created: " + outputMarkerFilePath);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating marker file: " + outputMarkerFilePath, e);
         }
     }
 
