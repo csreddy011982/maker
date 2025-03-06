@@ -15,7 +15,7 @@ ${transaction.recordNumber7}             FR/ABA      UNIT BANK DDA      UNIT    
 ${transaction.recordNumber8}             ------------------------------------------------------------
 <#-- Iterate Over Individual Transactions Correctly -->
 <#list transaction.detailsList as detail>
-${detail.recordNumber}           ${detail.frAba!""}   ${detail.unitBankDDA!"0000000000"?right_pad(10)}   ${detail.unit!""}        ${detail.unitName!""}         ${detail.creditAmount!""}
+${detail.recordNumber}           ${detail.frAba!""}   ${detail.unitBankDDA!"0000000000"?right_pad(10)}   ${detail.unit!""}        ${detail.unitName!""}         ${detail.creditAmount!""?string(",##0.00")?left_pad(10)}
 </#list>
 <#-- Summary Footer -->
 ${transaction.deposit}           DEPOSIT ACCOUNT NUMBER: ${transaction.accountNumber}                DEPOSIT TOTAL: ${transaction.totalCreditAmount}
