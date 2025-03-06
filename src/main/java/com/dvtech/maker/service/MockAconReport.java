@@ -23,6 +23,8 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -139,7 +141,11 @@ public class MockAconReport {
     private List<Map<String, Object>> createTransactionRecords(Long accountNumber) {
         List<Map<String, Object>> transactionList = new ArrayList<>();
         Map<String, Object> accountTransaction = new HashMap<>();
-        String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)).toUpperCase();
+        // Get previous day's date
+        String previousDate = LocalDateTime.now().minusDays(1)
+                .format(DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.ENGLISH))
+                .toUpperCase();
+        String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.ENGLISH)).toUpperCase();
         // ✅ Add recordNumber at the transaction level
         accountTransaction.put("account", String.format("%08d", accountNumber));
         accountTransaction.put("sequence", String.format("%06d", recordSequence.incrementAndGet()));
@@ -156,16 +162,16 @@ public class MockAconReport {
         accountTransaction.put("accountNumber", String.format("%013d", accountNumber));
         accountTransaction.put("companyCode", "0901");
         accountTransaction.put("currentDate",currentDate);
+        accountTransaction.put("previousDate",previousDate);
         List<Map<String, Object>> detailsList = new ArrayList<>();
         int numberOfTransactions = ThreadLocalRandom.current().nextInt(1, 4); // 1-3 transactions per account
 
         double totalCreditAmount = 0.0; // Variable to store the total sum of credited amounts
-        double totalDebitAmount = 0.0;  // Variable to store the total sum of debited amounts
 
         for (int i = 0; i < numberOfTransactions; i++) {
             Random random = new Random();
-            double creditAmountValue = Math.random() * 1000; // Generate a random credit amount
-            double debitAmountValue = Math.random() * 500;  // Generate a random debit amount
+            double creditAmountValue = Math.random()* 10000 ; // Generate a random credit amount
+            double debitAmountValue = Math.random() * 10000;  // Generate a random debit amount
 
             String creditAmount = formatAmount(creditAmountValue); // Format for display
             String debitAmount = formatAmount(debitAmountValue);
@@ -173,7 +179,7 @@ public class MockAconReport {
             detail.put("recordNumber", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
 
             detail.put("frAba", String.format("%06d", random.nextInt(999999)));
-            detail.put("unitBankDDA", String.format("%013d", random.nextInt(999999999)));
+            detail.put("unitBankDDA", generateRandomNumber());
             detail.put("unit", String.format("%05d", random.nextInt(99999)));
             detail.put("unitName","GRAINGER");
             detail.put("creditAmount", creditAmount);
@@ -181,7 +187,7 @@ public class MockAconReport {
 
             // Add to total sums
             totalCreditAmount += creditAmountValue;
-            totalDebitAmount += debitAmountValue;
+
 
             totalLines.incrementAndGet();
             detailsList.add(detail);
@@ -190,7 +196,7 @@ public class MockAconReport {
         accountTransaction.put("total", formatRecordNumberWithD(transactionSequence.incrementAndGet()));
         accountTransaction.put("lastEndRecord", formatRecordNumber(transactionSequence.incrementAndGet()-1));
         accountTransaction.put("totalCreditAmount", formatAmount(totalCreditAmount));
-        accountTransaction.put("totalDebitAmount", formatAmount(totalDebitAmount));
+        accountTransaction.put("totalDebitAmount", formatAmount(totalCreditAmount-totalCreditAmount));
 
 
         //accountTransaction.put("totalCreditAmount", formatAmount(totalCreditAmount));
@@ -210,7 +216,11 @@ public class MockAconReport {
         return ThreadLocalRandom.current().nextInt(1, 11); // Upper bound is exclusive (11 means it goes up to 10)
     }
 
-
+    private String generateRandomNumber() {
+        // Generate a number between 100,000,000 (9-digit) and 9,999,999,999,999 (13-digit)
+        long number = ThreadLocalRandom.current().nextLong(100_000_000L, 10_000_000_000_000L);
+        return String.valueOf(number);
+    }
     private Map<String, Object> createTrailer(int recordNumber) {
         Map<String, Object> trailer = new HashMap<>();
         trailer.put("recordNumber", formatRecordNumberWithD(recordNumber));
@@ -286,7 +296,10 @@ public class MockAconReport {
     }
 
     private String formatAmount(double amount) {
-        return String.format("%10.2f", amount);
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        formatter.setMinimumFractionDigits(2);
+        formatter.setMaximumFractionDigits(2);
+        return formatter.format(amount);
     }
 
     private String getFileCreationDate() {
@@ -296,10 +309,15 @@ public class MockAconReport {
     private String getFileCreationDateTime() {
         return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     }
+    private String getFileDateTime() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+    }
     private Map<String, Object> firstHeaderRecordMap(String adviceFeedName) {
         Map<String, Object> record = new HashMap<>();
         record.put("adviceFeedName", adviceFeedName);
-        record.put("creationDate", getFileCreationDateTime());
+        record.put("creationDateTime", getFileCreationDateTime());
+        record.put("creationDate", getFileDateTime());
+
         return record;
     }
     private Map<String, Object> createTrailerRecordMap(long accountNumber) {
