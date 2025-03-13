@@ -2,9 +2,6 @@ bls-file-feed:
   acon:
     template-file-name:  adv/ACON_spl_rpt_feed_template.ftl
     schedule: "*/2 * * * * *"
-  adeel:
-    template-file-name:  adv/ADEEL_spl_rpt_feed_template.ftl
-    schedule: "*/2 * * * * *"
   advice:
     template-file-name:  adv/Advice_feed_template.ftl
     feed-names: ARH,BTR,BTS

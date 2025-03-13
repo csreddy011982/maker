@@ -259,10 +259,7 @@ public class MockAdeelReport {
         int[] codes = {22, 32, 52};
         return codes[ThreadLocalRandom.current().nextInt(codes.length)];
     }
-    private String getRandomTransactionCodeAsString() {
-        int[] codes = {22, 32, 52};
-        return String.valueOf(codes[ThreadLocalRandom.current().nextInt(codes.length)]);
-    }
+    
 
     private String getRandomName() {
         String[] names = {"GINA J ERRIGO", "CHARLOTTE ANDERSON", "JENNIFER J FITZPATRICK", "ANGELO L DICKINSON"};

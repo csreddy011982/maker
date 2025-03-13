@@ -50,7 +50,7 @@ public class MockAconReport {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00");
     private static final AtomicInteger recordSequence = new AtomicInteger(0);
     private static final AtomicInteger totalLines = new AtomicInteger(0);
-    @Scheduled(cron = "${bls-file-feed.spl-acon.schedule}")
+   // @Scheduled(cron = "${bls-file-feed.spl-acon.schedule}")
     public void generateAdviceFeed() {
         splReportFeedNames.forEach(this::generateFile);
     }
